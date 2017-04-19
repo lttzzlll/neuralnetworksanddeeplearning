@@ -1,4 +1,5 @@
 import random
+import numpy as np
 
 class Network(object):
 
@@ -37,10 +38,16 @@ class Network(object):
 		
 		# loop training
 		for j in range(epochs):
+			# randomly shuffle the training data set
 			random.shuffle(training_data)
 			
+			# get mini batch data set
+			# from the training data set
+			# given the mini batch size
+			# Note the pythonic pragramming code style
 			mini_batches = [
 				training_data[k:k+mini_batch_size]
+				#            start, end, step size
 				for k in range(0, n, mini_batch_size)]
 			
 			for mini_batch in mini_batches:
@@ -61,11 +68,14 @@ class Network(object):
 		# note that the pythonic code below
 		for x, y in mini_batch:
 			delta_nabla_b, delta_nabla_w = self.backprop(x, y)
+			# the pythonic programming code style
 			nabla_b = [nb + dnb for nb, dnb in zip(nabla_b, delta_nabla_b)]
 			nabla_w = [nw + dnw for nw, dnw in zip(nabla_w, delta_nabla_w)]
 
 		# !Important 
 		# Your should update weights and biases simultaneously
+		# Note: w and b are numpy.ndarray
+		# so they can apply matrix operation like + , - , * , etc
 		self.weights = [w - (eta / len(mini_batch)) * nw 
 						for w, nw in zip(self.weights, nabla_w)]
 
@@ -98,8 +108,7 @@ class Network(object):
 			activations.append(activation)
 
 		# the |y - y'| from the output layer
-		delta = self.cost_derivative(activations[-1], y) 
-					* sigmoid_prime(zs[-1])
+		delta = self.cost_derivative(activations[-1], y) * sigmoid_prime(zs[-1])
 
 		nabla_b[-1] = delta
 		nabla_w[-1] = np.dot(delta, activations[-2].transpose())
@@ -120,9 +129,11 @@ class Network(object):
 	# calculate the computed accuracy
 	# the pythonic programming
 	def evaluate(self, test_data):
-		test_results = [(np.argmax(self.feedforward(x), axis=1), y)
+		# the final feedforward contains a (10 * 1) column vector
+		test_results = [(np.argmax(self.feedforward(x)), y)
 						for (x, y) in test_data]
 	
+		# calculate the accuracy on the test data set
 		return sum(int(x == y) for (x, y) in test_results)
 
 	# compute cost derivatives
@@ -130,12 +141,13 @@ class Network(object):
 	def cost_derivative(self, output_activations, y):
 		return (output_activations - y)
 
-
+# the helper function
 # sigmoid function
 def sigmoid(z):
 	return 1.0 / (1.0 + np.exp(-z))
 
 # sigmoid function's derivative
+# the advantage of sigmoid function on compute derivatives
 def sigmoid_prime(z):
 	return sigmoid(z) * (1 - sigmoid(z))
 
@@ -152,6 +164,14 @@ if __name__ == '__main__':
 	# so we need the validation data set to do this!!!
 	training_data, validation_data, test_data = mnist_loader.load_data_wrapper()
 
+	# build the neural network structure
+	# input layer 784
+	# hidden layer 100
+	# output layer 10
+	# weights should be [(100 * 784), (10 * 100)]
+	# biases should be [(100 * 1), (10 * 1)] just to contruct a column vector
 	net = Network([784, 100, 10])
 
+	# using Stochastic Gradient Descent to train the data
+	#   training data set, epoch, mini batch size, learning rate, test data set
 	net.SGD(training_data, 30, 10, 3.0, test_data=test_data)
